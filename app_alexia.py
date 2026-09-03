@@ -73,8 +73,8 @@ for message in st.session_state.chat.history:
     with st.chat_message(role):
         st.markdown(message.parts[0].text)
 
-# 6. Entrada de usuario
-if prompt := st.chat_input("Escribe tu mensaje para Alexia..."):
+# 6. Entrada de usuario con su respectiva key única
+if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat_input"):
     with st.chat_message("user"):
         st.markdown(prompt)
     
@@ -85,27 +85,3 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia..."):
                 st.markdown(response.text)
             except Exception as e:
                 st.error(f"Error en la respuesta: {e}")
-
-
-# 5. Inicializar el historial de conversación en la sesión de Streamlit
-if "chat" not in st.session_state:
-    st.session_state.chat = model.start_chat(history=[])
-
-# 6. Renderizar el historial de mensajes en la interfaz web
-for message in st.session_state.chat.history:
-    role = "user" if message.role == "user" else "assistant"
-    with st.chat_message(role):
-        st.markdown(message.parts[0].text)
-
-# 7. Caja de entrada de chat para el usuario
-if prompt := st.chat_input("Escribe tu mensaje para Alexia..."):
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    
-    with st.chat_message("assistant"):
-        with st.spinner("Alexia está escribiendo..."):
-            try:
-                response = st.session_state.chat.send_message(prompt)
-                st.markdown(response.text)
-            except Exception as e:
-                st.error(f"Ocurrió un error al conectar con la IA: {e}")

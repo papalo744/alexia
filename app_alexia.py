@@ -15,8 +15,21 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 2. Configuración directa con tu clave de Google
-genai.configure(api_key="AQ.Ab8RN6J6dbS58ZWE0mwuMg32LHBFb7sMKv9WSxLLMWK6ITlVNg")
+# 2. Obtener la API Key de forma segura (sin quemarla en el código)
+api_key = None
+if "GEMINI_API_KEY" in st.secrets:
+    api_key = st.secrets["GEMINI_API_KEY"]
+else:
+    # Si no hay secretos configurados, muestra un espacio seguro en la barra lateral
+    st.sidebar.title("🔐 Configuración")
+    api_key = st.sidebar.text_input("Ingresa tu API Key de Gemini:", type="password")
+
+if not api_key:
+    st.warning("⚠️ Por favor ingresa tu API Key en la barra lateral para activar el cerebro de Alexia.")
+    st.stop()
+
+# Configurar Gemini con la llave obtenida
+genai.configure(api_key=api_key)
 
 # 3. Personalidad y conocimiento base (System Prompt de Alexia)
 system_instruction = """
@@ -37,14 +50,19 @@ Mantén un tono siempre amigable, persuasivo, profesional y motivador en españo
 
 # 4. Inicializar el modelo de Gemini con las instrucciones del sistema
 @st.cache_resource
-def load_model():
+def load_model(key):
+    genai.configure(api_key=key)
     model = genai.GenerativeModel(
         model_name="gemini-1.5-flash",
         system_instruction=system_instruction
     )
     return model
 
-model = load_model()
+try:
+    model = load_model(api_key)
+except Exception as e:
+    st.error(f"Error al inicializar el modelo de IA: {e}")
+    st.stop()
 
 # 5. Inicializar el historial de conversación en la sesión de Streamlit
 if "chat" not in st.session_state:

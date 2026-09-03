@@ -25,7 +25,24 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
-# 3. System Prompt y personalidad de Alexia
+# 3. Detectar automáticamente el modelo activo en Groq para evitar errores de deprecación
+@st.cache_data
+def obtener_modelo_activo(key):
+    try:
+        temp_client = Groq(api_key=key)
+        models = temp_client.models.list()
+        # Buscar un modelo de lenguaje disponible
+        for m in models.data:
+            m_id = m.id
+            if "llama" in m_id.lower() or "mixtral" in m_id.lower() or "gemma" in m_id.lower():
+                return m_id
+        return models.data[0].id if models.data else "llama-3.3-70b-versatile"
+    except Exception:
+        return "llama-3.3-70b-versatile"
+
+model_name = obtener_modelo_activo(api_key)
+
+# 4. System Prompt y personalidad de Alexia
 system_instruction = """
 Eres Alexia, una asesora virtual experta, cálida, consultiva y profesional de "English Ya". 
 Tu objetivo es guiar a los usuarios y prospectos interesados en aprender inglés, resolviendo sus dudas con empatía y claridad.
@@ -42,7 +59,7 @@ Información clave sobre English Ya:
 Mantén un tono siempre amigable, persuasivo, profesional y motivador en español.
 """
 
-# 4. Inicializar historial de conversación
+# 5. Inicializar historial de conversación
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": system_instruction}
@@ -54,7 +71,7 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# 5. Caja de entrada del usuario
+# 6. Caja de entrada del usuario
 if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat_input"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -64,7 +81,7 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
         with st.spinner("Alexia está escribiendo..."):
             try:
                 chat_completion = client.chat.completions.create(
-                    model="mixtral-8x7b-32768",
+                    model=model_name,
                     messages=st.session_state.messages,
                     temperature=0.7,
                 )
@@ -72,4 +89,4 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
             except Exception as e:
-                st.error(f"Error en la respuesta: {e}")
+                st.error(f"Error en la respuesta con el modelo {model_name}: {e}")

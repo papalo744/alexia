@@ -64,7 +64,7 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
         with st.spinner("Alexia está escribiendo..."):
             try:
                 chat_completion = client.chat.completions.create(
-                    model="llama-3.1-70b-versatile",
+                    model="llama-3.1-8b-instant",
                     messages=st.session_state.messages,
                     temperature=0.7,
                 )

@@ -1,5 +1,5 @@
 import streamlit as st
-import google.generativeai as genai
+from groq import Groq
 
 # 1. Configuración de la página
 st.set_page_config(
@@ -15,24 +15,17 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 2. Obtención segura de la API Key
-api_key = None
-try:
-    api_key = st.secrets.get("GEMINI_API_KEY")
-except Exception:
-    pass
+# 2. Configuración limpia mediante la barra lateral
+st.sidebar.title("🔐 Configuración")
+api_key = st.sidebar.text_input("Ingresa tu API Key de Groq:", type="password", help="Consíguela gratis en console.groq.com")
 
 if not api_key:
-    st.sidebar.title("🔐 Configuración")
-    api_key = st.sidebar.text_input("Ingresa tu API Key de Gemini:", type="password")
-
-if not api_key:
-    st.warning("⚠️ Por favor ingresa tu API Key en la barra lateral para activar el chat.")
+    st.warning("⚠️ Entra a console.groq.com (toma 5 segundos con Google), copia tu API Key gratuita y pégala aquí en la barra lateral para activar a Alexia.")
     st.stop()
 
-genai.configure(api_key=api_key)
+client = Groq(api_key=api_key)
 
-# 3. Personalidad y System Prompt de Alexia
+# 3. System Prompt y personalidad de Alexia
 system_instruction = """
 Eres Alexia, una asesora virtual experta, cálida, consultiva y profesional de "English Ya". 
 Tu objetivo es guiar a los usuarios y prospectos interesados en aprender inglés, resolviendo sus dudas con empatía y claridad.
@@ -49,39 +42,34 @@ Información clave sobre English Ya:
 Mantén un tono siempre amigable, persuasivo, profesional y motivador en español.
 """
 
-# 4. Inicializar modelo
-@st.cache_resource
-def load_model(key):
-    genai.configure(api_key=key)
-    return genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
-        system_instruction=system_instruction
-    )
+# 4. Inicializar historial de conversación
+if "messages" not in st.session_state:
+    st.session_state.messages = [
+        {"role": "system", "content": system_instruction}
+    ]
 
-try:
-    model = load_model(api_key)
-except Exception as e:
-    st.error(f"Error al inicializar el modelo: {e}")
-    st.stop()
+# Renderizar historial en pantalla
+for message in st.session_state.messages:
+    if message["role"] != "system":
+        with st.chat_message(message["role"]):
+            st.markdown(message["content"])
 
-# 5. Historial de chat
-if "chat" not in st.session_state:
-    st.session_state.chat = model.start_chat(history=[])
-
-for message in st.session_state.chat.history:
-    role = "user" if message.role == "user" else "assistant"
-    with st.chat_message(role):
-        st.markdown(message.parts[0].text)
-
-# 6. Entrada de usuario con su respectiva key única
+# 5. Caja de entrada del usuario
 if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat_input"):
+    st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
     
     with st.chat_message("assistant"):
         with st.spinner("Alexia está escribiendo..."):
             try:
-                response = st.session_state.chat.send_message(prompt)
-                st.markdown(response.text)
+                chat_completion = client.chat.completions.create(
+                    model="llama-3.3-70b-versatile",
+                    messages=st.session_state.messages,
+                    temperature=0.7,
+                )
+                response_text = chat_completion.choices[0].message.content
+                st.markdown(response_text)
+                st.session_state.messages.append({"role": "assistant", "content": response_text})
             except Exception as e:
                 st.error(f"Error en la respuesta: {e}")

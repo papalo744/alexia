@@ -25,20 +25,23 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
-# 3. Detectar automáticamente el modelo activo en Groq para evitar errores de deprecación
+# 3. Detector inteligente que descarta filtros de seguridad y busca un modelo de chat real
 @st.cache_data
 def obtener_modelo_activo(key):
     try:
         temp_client = Groq(api_key=key)
         models = temp_client.models.list()
-        # Buscar un modelo de lenguaje disponible
         for m in models.data:
-            m_id = m.id
-            if "llama" in m_id.lower() or "mixtral" in m_id.lower() or "gemma" in m_id.lower():
-                return m_id
-        return models.data[0].id if models.data else "llama-3.3-70b-versatile"
+            m_id = m.id.lower()
+            # Descarta modelos de seguridad, embeddings o audio
+            if any(x in m_id for x in ["guard", "embed", "whisper", "audio", "tool"]):
+                continue
+            # Busca modelos conversacionales
+            if "llama" in m_id or "gemma" in m_id or "mixtral" in m_id:
+                return m.id
+        return "gemma2-9b-it"
     except Exception:
-        return "llama-3.3-70b-versatile"
+        return "gemma2-9b-it"
 
 model_name = obtener_modelo_activo(api_key)
 

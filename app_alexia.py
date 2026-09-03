@@ -18,7 +18,7 @@ st.markdown("""
 # 2. Obtener la API Key de forma segura (sin quemarla en el código)
 api_key = None
 if "GEMINI_API_KEY" in st.secrets:
-    api_key = st.secrets["GEMINI_API_KEY"]
+    api_key = st.secrets["AQ.Ab8RN6KICT3gakaxUh5BEuotrV3YoTtIbGetfQBN0b0aVPLPGw"]
 else:
     # Si no hay secretos configurados, muestra un espacio seguro en la barra lateral
     st.sidebar.title("🔐 Configuración")

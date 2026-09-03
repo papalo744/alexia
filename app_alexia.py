@@ -15,9 +15,9 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# 2. Configuración limpia mediante la barra lateral
+# 2. Configuración mediante la barra lateral
 st.sidebar.title("🔐 Configuración")
-api_key = st.sidebar.text_input("Ingresa tu API Key de Groq:", type="password", help="Consíguela gratis en console.groq.com")
+api_key = st.sidebar.text_input("Ingresa tu API Key de Groq:", type="password")
 
 if not api_key:
     st.warning("⚠️ Pega tu API Key de Groq en la barra lateral para activar a Alexia.")
@@ -64,7 +64,7 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
         with st.spinner("Alexia está escribiendo..."):
             try:
                 chat_completion = client.chat.completions.create(
-                    model="llama-3.1-8b-instant",
+                    model="llama3-8b-8192",
                     messages=st.session_state.messages,
                     temperature=0.7,
                 )

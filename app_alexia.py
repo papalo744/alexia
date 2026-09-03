@@ -16,7 +16,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # 2. Configuración directa con tu clave de Google
-genai.configure(api_key="AQ.Ab8RN6ICIT3gakaxUh5BEuotrV3YoTtIbGetfQBN0b0aVPLPGw")
+genai.configure(api_key="AQ.Ab8RN6J6dbS58ZWE0mwuMg32LHBFb7sMKv9WSxLLMWK6ITlVNg
 
 # 3. Personalidad y conocimiento base (System Prompt de Alexia)
 system_instruction = """

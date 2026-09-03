@@ -20,7 +20,7 @@ st.sidebar.title("🔐 Configuración")
 api_key = st.sidebar.text_input("Ingresa tu API Key de Groq:", type="password", help="Consíguela gratis en console.groq.com")
 
 if not api_key:
-    st.warning("⚠️ Entra a console.groq.com (toma 5 segundos con Google), copia tu API Key gratuita y pégala aquí en la barra lateral para activar a Alexia.")
+    st.warning("⚠️ Pega tu API Key de Groq en la barra lateral para activar a Alexia.")
     st.stop()
 
 client = Groq(api_key=api_key)
@@ -64,7 +64,7 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
         with st.spinner("Alexia está escribiendo..."):
             try:
                 chat_completion = client.chat.completions.create(
-                    model="llama-3.3-70b-versatile",
+                    model="llama-3.1-70b-versatile",
                     messages=st.session_state.messages,
                     temperature=0.7,
                 )

@@ -25,21 +25,21 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
-# 3. System Prompt y personalidad de Alexia
+# 3. System Prompt ajustado para respuestas cortas y comerciales
 system_instruction = """
-Eres Alexia, una asesora virtual experta, cálida, consultiva y profesional de "English Ya". 
-Tu objetivo es guiar a los usuarios y prospectos interesados en aprender inglés, resolviendo sus dudas con empatía y claridad.
+Eres Alexia, una asesora virtual experta, cálida y profesional de "English Ya". 
+Tu objetivo es guiar a los prospectos interesados en aprender inglés de forma rápida y persuasiva.
+
+REGLAS DE COMUNICACIÓN OBLIGATORIAS:
+- Sé breve y directa: Tus respuestas deben tener máximo 2 o 3 frases cortas. Evita los párrafos largos.
+- Actúa como en un chat de WhatsApp: Mantén un ritmo ágil y dinámico.
+- Cierra siempre con una pregunta sencilla para invitar al usuario a continuar la charla o a agendar su asesoría.
 
 Información clave sobre English Ya:
-- Programas disponibles: 
-  1. Clases 1 a 1 (Personalizadas y adaptadas al ritmo del estudiante).
-  2. Conversation Clubs (Clubes de conversación dinámicos para perder el miedo a hablar).
-  3. Programas Corporativos (Capacitaciones a la medida para empresas).
-- Metodología: Enfoque 100% conversacional, dinámico, enfocado en la práctica real desde el primer día, rompiendo la barrera del miedo y con profesores altamente cualificados.
-- Casos de éxito destacados: Contamos con reconocidas figuras públicas y profesionales que han potenciado su carrera con nosotros, como María Fernanda Aristizábal.
-- Precios y Planes: Ofrecemos diferentes paquetes flexibles según el objetivo del estudiante. Invítalos siempre a agendar una asesoría personalizada o a dejar sus datos para darles una cotización exacta a su medida.
-
-Mantén un tono siempre amigable, persuasivo, profesional y motivador en español.
+- Programas: Clases 1 a 1 personalizadas, Conversation Clubs dinámicos y Capacitaciones Corporativas.
+- Metodología: 100% conversacional, práctica desde el primer día y sin miedo a hablar.
+- Casos de éxito: Contamos con profesionales y figuras públicas como María Fernanda Aristizábal.
+- Invita siempre a agendar una asesoría para darles una cotización exacta.
 """
 
 # 4. Inicializar historial de conversación
@@ -54,7 +54,7 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# 5. Caja de entrada del usuario usando el modelo actual oficial de Groq
+# 5. Caja de entrada del usuario
 if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat_input"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -62,14 +62,30 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
     
     with st.chat_message("assistant"):
         with st.spinner("Alexia está escribiendo..."):
-            try:
-                chat_completion = client.chat.completions.create(
-                    model="openai/gpt-oss-120b",
-                    messages=st.session_state.messages,
-                    temperature=0.7,
-                )
-                response_text = chat_completion.choices[0].message.content
+            modelos_disponibles = [
+                "openai/gpt-oss-120b",
+                "llama-3.3-70b-versatile",
+                "mixtral-8x7b-32768"
+            ]
+            
+            response_text = None
+            ultimo_error = None
+            
+            for modelo_actual in modelos_disponibles:
+                try:
+                    chat_completion = client.chat.completions.create(
+                        model=modelo_actual,
+                        messages=st.session_state.messages,
+                        temperature=0.7,
+                    )
+                    response_text = chat_completion.choices[0].message.content
+                    break
+                except Exception as e:
+                    ultimo_error = e
+                    continue
+            
+            if response_text:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
-            except Exception as e:
-                st.error(f"Error en la respuesta: {e}")
+            else:
+                st.error(f"Error en la respuesta: {ultimo_error}")

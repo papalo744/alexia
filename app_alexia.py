@@ -2,7 +2,7 @@ import streamlit as st
 import google.generativeai as genai
 
 # Carga la llave de forma segura desde los secretos de Streamlit
-API_KEY = st.secrets["AQ.Ab8RN6KICT3gakaxUh5BEuotrV3YoTtIbGetfQBN0b0aVPLPGw"]
+API_KEY = st.secrets["GEMINI_API_KEY"]
 genai.configure(api_key=API_KEY)
 
 # Configuración de la página web

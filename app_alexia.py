@@ -54,7 +54,7 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# 5. Caja de entrada del usuario con selector automático y reintento por respaldo
+# 5. Caja de entrada del usuario usando el modelo actual oficial de Groq
 if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat_input"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -62,34 +62,14 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
     
     with st.chat_message("assistant"):
         with st.spinner("Alexia está escribiendo..."):
-            # Lista de modelos principales y de respaldo en Groq
-            modelos_disponibles = [
-                "llama-3.3-70b-versatile",
-                "llama-3.2-3b-preview",
-                "llama-3.2-1b-preview",
-                "llama-3.1-8b-instant",
-                "mixtral-8x7b-32768"
-            ]
-            
-            response_text = None
-            ultimo_error = None
-            
-            # Prueba automáticamente cada modelo hasta que uno responda con éxito
-            for modelo_actual in modelos_disponibles:
-                try:
-                    chat_completion = client.chat.completions.create(
-                        model=modelo_actual,
-                        messages=st.session_state.messages,
-                        temperature=0.7,
-                    )
-                    response_text = chat_completion.choices[0].message.content
-                    break # Si el modelo funciona, salimos del ciclo con éxito
-                except Exception as e:
-                    ultimo_error = e
-                    continue # Si está obsoleto, prueba el siguiente de la lista en automático
-            
-            if response_text:
+            try:
+                chat_completion = client.chat.completions.create(
+                    model="openai/gpt-oss-120b",
+                    messages=st.session_state.messages,
+                    temperature=0.7,
+                )
+                response_text = chat_completion.choices[0].message.content
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
-            else:
-                st.error(f"No se pudo conectar con ningún modelo de Groq. Error: {ultimo_error}")
+            except Exception as e:
+                st.error(f"Error en la respuesta: {e}")

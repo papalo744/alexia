@@ -25,27 +25,7 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
-# 3. Detector inteligente que descarta filtros de seguridad y busca un modelo de chat real
-@st.cache_data
-def obtener_modelo_activo(key):
-    try:
-        temp_client = Groq(api_key=key)
-        models = temp_client.models.list()
-        for m in models.data:
-            m_id = m.id.lower()
-            # Descarta modelos de seguridad, embeddings o audio
-            if any(x in m_id for x in ["guard", "embed", "whisper", "audio", "tool"]):
-                continue
-            # Busca modelos conversacionales
-            if "llama" in m_id or "gemma" in m_id or "mixtral" in m_id:
-                return m.id
-        return "gemma2-9b-it"
-    except Exception:
-        return "gemma2-9b-it"
-
-model_name = obtener_modelo_activo(api_key)
-
-# 4. System Prompt y personalidad de Alexia
+# 3. System Prompt y personalidad de Alexia
 system_instruction = """
 Eres Alexia, una asesora virtual experta, cálida, consultiva y profesional de "English Ya". 
 Tu objetivo es guiar a los usuarios y prospectos interesados en aprender inglés, resolviendo sus dudas con empatía y claridad.
@@ -62,7 +42,7 @@ Información clave sobre English Ya:
 Mantén un tono siempre amigable, persuasivo, profesional y motivador en español.
 """
 
-# 5. Inicializar historial de conversación
+# 4. Inicializar historial de conversación
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {"role": "system", "content": system_instruction}
@@ -74,7 +54,7 @@ for message in st.session_state.messages:
         with st.chat_message(message["role"]):
             st.markdown(message["content"])
 
-# 6. Caja de entrada del usuario
+# 5. Caja de entrada del usuario con selector automático y reintento por respaldo
 if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat_input"):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
@@ -82,14 +62,34 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
     
     with st.chat_message("assistant"):
         with st.spinner("Alexia está escribiendo..."):
-            try:
-                chat_completion = client.chat.completions.create(
-                    model=model_name,
-                    messages=st.session_state.messages,
-                    temperature=0.7,
-                )
-                response_text = chat_completion.choices[0].message.content
+            # Lista de modelos principales y de respaldo en Groq
+            modelos_disponibles = [
+                "llama-3.3-70b-versatile",
+                "llama-3.2-3b-preview",
+                "llama-3.2-1b-preview",
+                "llama-3.1-8b-instant",
+                "mixtral-8x7b-32768"
+            ]
+            
+            response_text = None
+            ultimo_error = None
+            
+            # Prueba automáticamente cada modelo hasta que uno responda con éxito
+            for modelo_actual in modelos_disponibles:
+                try:
+                    chat_completion = client.chat.completions.create(
+                        model=modelo_actual,
+                        messages=st.session_state.messages,
+                        temperature=0.7,
+                    )
+                    response_text = chat_completion.choices[0].message.content
+                    break # Si el modelo funciona, salimos del ciclo con éxito
+                except Exception as e:
+                    ultimo_error = e
+                    continue # Si está obsoleto, prueba el siguiente de la lista en automático
+            
+            if response_text:
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
-            except Exception as e:
-                st.error(f"Error en la respuesta con el modelo {model_name}: {e}")
+            else:
+                st.error(f"No se pudo conectar con ningún modelo de Groq. Error: {ultimo_error}")

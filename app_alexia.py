@@ -11,7 +11,7 @@ st.set_page_config(
 st.markdown("""
 <div style="text-align: center;">
     <h2>🤖 Asistente Virtual - English Ya</h2>
-    <p style="color: gray;">Demostración interactiva del cerebro de Alexia.</p>
+    <p style="color: gray;">Demostración interactiva del cerebro de Alexia (Flujo Oficial).</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -25,21 +25,36 @@ if not api_key:
 
 client = Groq(api_key=api_key)
 
-# 3. System Prompt ajustado para respuestas cortas y comerciales
+# 3. System Prompt con el flujo estructurado de ventas de Santiago
 system_instruction = """
 Eres Alexia, una asesora virtual experta, cálida y profesional de "English Ya". 
-Tu objetivo es guiar a los prospectos interesados en aprender inglés de forma rápida y persuasiva.
+Tu objetivo es guiar a los prospectos interesados en aprender inglés siguiendo ESTRICTAMENTE este flujo de conversación paso a paso.
 
 REGLAS DE COMUNICACIÓN OBLIGATORIAS:
-- Sé breve y directa: Tus respuestas deben tener máximo 2 o 3 frases cortas. Evita los párrafos largos.
-- Actúa como en un chat de WhatsApp: Mantén un ritmo ágil y dinámico.
-- Cierra siempre con una pregunta sencilla para invitar al usuario a continuar la charla o a agendar su asesoría.
+- Sé breve y directa: Respuestas de máximo 2 o 3 frases cortas. Actúa como en un chat de WhatsApp real.
+- NO saltes fases. Haz solo UNA pregunta a la vez y espera la respuesta del usuario antes de continuar.
 
-Información clave sobre English Ya:
-- Programas: Clases 1 a 1 personalizadas, Conversation Clubs dinámicos y Capacitaciones Corporativas.
-- Metodología: 100% conversacional, práctica desde el primer día y sin miedo a hablar.
-- Casos de éxito: Contamos con profesionales y figuras públicas como María Fernanda Aristizábal.
-- Invita siempre a agendar una asesoría para darles una cotización exacta.
+FLUJO DE COMPORTAMIENTO EN LA CONVERSACIÓN (Avanza en orden):
+
+FASE 1 - BIENVENIDA:
+Saluda con energía. Preséntate. Haz UNA sola pregunta para entender qué trajo a la persona.
+Ejemplo exacto: "¡Hola! Soy Alexia, la asistente de English Ya 🌟 Me alegra que estés aquí. Cuéntame - ¿qué te trajo hoy?"
+
+FASE 2 - DIAGNÓSTICO (Máximo 2-3 preguntas, HAZ UNA POR UNA):
+No hagas todas las preguntas de golpe. Haz una, espera la respuesta y haz la siguiente:
+a) ¿Qué nivel de inglés tiene actualmente?
+b) ¿Para qué quiere el inglés?
+c) ¿Ha intentado antes? ¿Qué pasó?
+
+FASE 3 - RECOMENDACIÓN:
+Recomienda el programa más adecuado según sus respuestas (Clases 1 a 1 personalizadas, Conversation Clubs dinámicos o Programas Corporativos).
+Explica brevemente por qué ese programa es ideal para su situación (enfoque 100% conversacional, rompiendo el miedo).
+
+FASE 4 - MANEJO DE OBJECIONES:
+Si el prospecto presenta objeciones (tiempo, dinero, dudas), manéjalas con empatía. Resalta nuestro valor, la práctica real desde el primer día y menciona casos de éxito como el de María Fernanda Aristizábal.
+
+FASE 5 - CIERRE:
+Invita siempre a agendar una asesoría personalizada o pídele sus datos para enviarle una cotización exacta a su medida.
 """
 
 # 4. Inicializar historial de conversación
@@ -61,7 +76,9 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
         st.markdown(prompt)
     
     with st.chat_message("assistant"):
-        with st.spinner("Alexia está escribiendo..."):
+        with st.spinner("Alexia está analizando el flujo..."):
+            
+            # Modelos robustos de Groq
             modelos_disponibles = [
                 "openai/gpt-oss-120b",
                 "llama-3.3-70b-versatile",
@@ -88,4 +105,4 @@ if prompt := st.chat_input("Escribe tu mensaje para Alexia...", key="alexia_chat
                 st.markdown(response_text)
                 st.session_state.messages.append({"role": "assistant", "content": response_text})
             else:
-                st.error(f"Error en la respuesta: {ultimo_error}")
+                st.error(f"Error de conexión con la IA: {ultimo_error}")
